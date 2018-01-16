@@ -67,6 +67,14 @@ Public Class Form1
     Dim UsingMethod As String
     Dim GetVideoThumbnail As New Process()
     Dim GetVideoThumbnailInfo As New ProcessStartInfo(Application.StartupPath & "\GetVideoThumbnail.bat")
+    Dim DownloadMP3 As New Process()
+    Dim DownloadMP3Info As New ProcessStartInfo(Application.StartupPath & "\DownloadMP3.bat")
+    Dim downloader As Thread
+    Dim FileName As String
+    Dim OriginalName As String
+    Dim OriginalExtension As String
+    Dim DownloadMP3Only As New Process()
+    Dim DownloadMP3OnlyInfo As New ProcessStartInfo(Application.StartupPath & "\DownloadOnlyMP3.bat")
     'Dim TaskBarValue As System.Windows.Shell
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         OpenFileDialog1.Title = ("Select the media file you would want to convert")
@@ -208,7 +216,7 @@ Public Class Form1
         Dim command1_1 As String
         Dim command1_2 As String
         RichTextBox1.AppendText(DateTime.Now & " Creating commands" & vbCrLf)
-        command1_1 = "cd " & Application.StartupPath & "\mediainfo"
+        command1_1 = "cd " & Application.StartupPath & "\ffmpeg\bin"
         command1_2 = "ffprobe -select_streams v -show_streams " & Chr(34) & ImpPath & Chr(34)
         RichTextBox1.AppendText(DateTime.Now & "  Writing to GetFrames.bat" & vbCrLf)
         Dim editBAT As StreamWriter
@@ -236,7 +244,7 @@ Public Class Form1
         output_12 = output_11(1).Split(Chr(10))
         'MsgBox(output_12(0))
         RichTextBox1.AppendText(DateTime.Now & " GetFrames.bat completed")
-        If output_12(0) = "N/A" Then
+        If output_12(0).Contains("N/A") Then
             RichTextBox1.AppendText(DateTime.Now & " Error in reading frame count, will not use progress bar")
             FrameError = True
             GoTo FramesDone
@@ -996,6 +1004,7 @@ Endread:
             Next
         Else
             UsingMethod = "Working"
+            Label17.Text = "Status: Getting Video Thumbnail"
             TrackBar1.Enabled = False
             ComboBox4.Items.Clear()
             ComboBox4.Items.Add("MP4 1080p")
@@ -1005,6 +1014,7 @@ Endread:
             ComboBox4.Items.Add("MP4 240p")
             ComboBox4.Items.Add("MP4 144p")
             ComboBox4.Items.Add("MP3 only")
+            ComboBox4.Items.Add("MP3 + Video")
             ComboBox4.Text = "Please select a quality"
             Dim VidURL As String
             VidURL = TextBox1.Text
@@ -1021,7 +1031,7 @@ Endread:
             GetVideoThumbnail.StartInfo = GetVideoThumbnailInfo
             GetVideoThumbnail.Start()
             output1 = GetVideoThumbnail.StandardOutput.ReadToEnd()
-            MsgBox(output1)
+            'MsgBox(output1)
             editBAT = New StreamWriter(Application.StartupPath & "\file2.txt")
             editBAT.Write(output1)
             editBAT.Close()
@@ -1034,17 +1044,17 @@ Endread:
             output1 = output1.Trim(Chr(13))
             'output1 = output1.Trim(Chr())
             If output1.Contains(VidURL) Then
-                MsgBox("works")
+                'MsgBox("works")
             End If
             output1.Replace(TextBox1.Text, "hello")
             output1 = (New Regex(TextBox1.Text).Replace(output1, "TO.BE.SPLIT.HERE"))
             output1 = System.Text.RegularExpressions.Regex.Replace(output1, TextBox1.Text, "hello")
-            MsgBox("output1:" & output1)
+            'MsgBox("output1:" & output1)
             output2 = Regex.Split(output1, "https://")
-            MsgBox(TextBox1.Text)
-            MsgBox(output2(0))
+            'MsgBox(TextBox1.Text)
+            'MsgBox(output2(0))
             For Each item As String In output2
-                MsgBox(item)
+                'MsgBox(item)
                 If item.Contains("i.ytimg") Then
                     Dim URL As String
                     URL = "https://" & item
@@ -1061,12 +1071,166 @@ Endread:
 
     Private Sub Button24_Click(sender As Object, e As EventArgs) Handles Button24.Click
         If UsingMethod = "Working" Then
+            If ComboBox4.SelectedItem = "MP3 + Video" Then
+                If SaveFileDialog6.ShowDialog = DialogResult.OK Then
+                    If downloader.IsAlive = False Then
+                        downloader = New Thread(AddressOf MP3Downloader)
+                        downloader.Start()
+                    Else
+                        MsgBox("Please wait for the current process to finish")
+                    End If
+                End If
+            End If
             If ComboBox4.SelectedItem = "MP3 only" Then
-
+                If SaveFileDialog7.ShowDialog = DialogResult.OK Then
+                    'If downloader.IsAlive = False Then
+                    downloader = New Thread(AddressOf MP3OnlyDownloader)
+                    downloader.Start()
+                    'Else
+                    MsgBox("Please wait for the current process to finish")
+                    'End If
+                End If
             End If
         ElseIf UsingMethod = "Development" Then
 
         End If
+    End Sub
+
+    Public Sub MP3Downloader()
+
+        Dim command As String
+        command = "youtube-dl --extract-audio --audio-format mp3 --newline -k " & TextBox1.Text
+        Dim editBAT As StreamWriter
+        editBAT = New StreamWriter(Application.StartupPath & "\DownloadMP3.bat")
+        editBAT.WriteLine("cd " & Chr(34) & Application.StartupPath & Chr(34))
+        editBAT.WriteLine(command)
+        editBAT.Close()
+        DownloadMP3Info.UseShellExecute = False
+        DownloadMP3Info.WindowStyle = ProcessWindowStyle.Hidden
+        DownloadMP3Info.RedirectStandardError = True
+        DownloadMP3Info.RedirectStandardOutput = True
+        DownloadMP3Info.CreateNoWindow = True
+        DownloadMP3.StartInfo = DownloadMP3Info
+        ProgressBar1.Maximum = 1000
+        ProgressBar1.Value = 0
+        DownloadMP3.Start()
+        Dim OutputRead As StreamReader = DownloadMP3.StandardOutput
+        ReadOutput(OutputRead)
+        DownloadMP3.WaitForExit()
+        DownloadMP3.Close()
+        Label17.Text = "Status:Copying"
+        If SaveFileDialog6.FileName.Contains("files stored here") Then
+            Dim FolderPath As String
+            Dim output1() As String
+            output1 = Regex.Split(SaveFileDialog6.FileName, "files stored here")
+            FolderPath = output1(0)
+            'MsgBox(FolderPath)
+            'MsgBox(OriginalName)
+            'MsgBox(FileName)
+            File.Copy(Application.StartupPath & "/" & OriginalName, FolderPath & OriginalName)
+            File.Copy(Application.StartupPath & "/" & FileName & ".mp3", FolderPath & FileName & ".mp3")
+        Else
+            File.Copy(Application.StartupPath & "/" & OriginalName, SaveFileDialog6.FileName & "." & OriginalExtension)
+            File.Copy(Application.StartupPath & "/" & FileName & ".mp3", SaveFileDialog6.FileName & "(MP3)" & ".mp3")
+        End If
+        Label17.Text = "Status: Deleting residual files"
+        File.Delete(Application.StartupPath & "/" & OriginalName)
+        File.Delete(Application.StartupPath & "/" & FileName & ".mp3")
+        If File.Exists(Application.StartupPath & "/" & FileName & ".mkv") Then
+            File.Delete(Application.StartupPath & "/" & FileName & ".mkv")
+        End If
+        Label17.Text = "Status:"
+        MsgBox("Successfully Downloaded")
+    End Sub
+
+    Private Async Sub ReadOutput(OutputRead As StreamReader)
+        Dim newline As String = Await OutputRead.ReadLineAsync()
+        'MsgBox(newline)
+        If newline IsNot Nothing Then
+            If newline.Contains("[download] Destination: ") Then
+                Dim output1 As String()
+                Dim output2() As String
+
+                output1 = Regex.Split(newline, "download] Destination: ")
+                OriginalName = output1(1)
+                output2 = output1(1).Split(".")
+                FileName = output2(0)
+                OriginalExtension = output2(1)
+            ElseIf newline.Contains("[download] ") Then
+                If newline.Contains("Destination: ") = False And newline.Contains("ETA") = True Then
+                    Dim output1() As String
+                    Dim output2() As String
+                    Dim output3() As String
+                    Dim output4() As String
+                    Dim output5() As String
+                    Dim VideoSize As String
+                    Dim RawProgress As Decimal
+                    Dim Progress As Integer
+                    Dim RemainingTime As String
+
+                    output1 = Regex.Split(newline, "download] ")
+                    output2 = Regex.Split(output1(1), "%")
+                    RawProgress = output2(0)
+                    Progress = RawProgress * 10
+                    output3 = Regex.Split(newline, "ETA ")
+                    RemainingTime = output3(1)
+                    output4 = Regex.Split(newline, "% of ")
+                    output5 = Regex.Split(output4(1), " at ")
+                    VideoSize = output5(0)
+                    Label17.Text = "Status: Downloading, " & RawProgress & "% of " & VideoSize & ", ETA " & RemainingTime
+                    ProgressBar1.Value = Progress
+                End If
+            ElseIf newline.Contains("[download] 100% of ") Then
+                ProgressBar1.Value = 1000
+            ElseIf newline.Contains("[ffmpeg] Destination: ") Then
+                ProgressBar1.Value = 0
+                Label17.Text = "Status: Converting"
+
+            End If
+        End If
+        ReadOutput(OutputRead)
+    End Sub
+    Public Sub MP3OnlyDownloader()
+        Dim command As String
+        command = "youtube-dl --extract-audio --audio-format mp3 --newline " & TextBox1.Text
+        Dim editBAT As StreamWriter
+        editBAT = New StreamWriter(Application.StartupPath & "\DownloadOnlyMP3.bat")
+        editBAT.WriteLine("cd " & Chr(34) & Application.StartupPath & Chr(34))
+        editBAT.WriteLine(command)
+        editBAT.Close()
+        DownloadMP3OnlyInfo.UseShellExecute = False
+        DownloadMP3OnlyInfo.WindowStyle = ProcessWindowStyle.Hidden
+        DownloadMP3OnlyInfo.RedirectStandardError = True
+        DownloadMP3OnlyInfo.RedirectStandardOutput = True
+        DownloadMP3OnlyInfo.CreateNoWindow = True
+        DownloadMP3Only.StartInfo = DownloadMP3OnlyInfo
+        ProgressBar1.Maximum = 1000
+        ProgressBar1.Value = 0
+        DownloadMP3Only.Start()
+        Dim OutputRead As StreamReader = DownloadMP3Only.StandardOutput
+        ReadOutput(OutputRead)
+        DownloadMP3Only.WaitForExit()
+        DownloadMP3Only.Close()
+        Label17.Text = "Status:Copying"
+        If SaveFileDialog7.FileName.Contains("default") Then
+            Dim FolderPath As String
+            Dim output1() As String
+            output1 = Regex.Split(SaveFileDialog7.FileName, "default")
+            FolderPath = output1(0)
+            If File.Exists(Application.StartupPath & "\" & FileName & ".mp3") Then
+                File.Copy(Application.StartupPath & "\" & FileName & ".mp3", FolderPath & FileName & ".mp3")
+            End If
+        Else
+            If File.Exists(Application.StartupPath & "\" & FileName & ".mp3") Then
+                File.Copy(Application.StartupPath & "\" & FileName & ".mp3", SaveFileDialog7.FileName & ".mp3")
+            End If
+        End If
+        Label17.Text = "Status: Deleting residual files"
+        If File.Exists(Application.StartupPath & "\" & FileName & ".mp3") Then
+            File.Delete(Application.StartupPath & "\" & FileName & ".mp3")
+        End If
+        Label17.Text = "Status:"
+        MsgBox("Successfully Downloaded")
     End Sub
 End Class
 'cut code

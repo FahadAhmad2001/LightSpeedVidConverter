@@ -79,6 +79,7 @@ Partial Class Form1
         Me.PictureBox1 = New System.Windows.Forms.PictureBox()
         Me.Button7 = New System.Windows.Forms.Button()
         Me.TabPage7 = New System.Windows.Forms.TabPage()
+        Me.Label17 = New System.Windows.Forms.Label()
         Me.PictureBox2 = New System.Windows.Forms.PictureBox()
         Me.Label16 = New System.Windows.Forms.Label()
         Me.TrackBar1 = New System.Windows.Forms.TrackBar()
@@ -98,6 +99,8 @@ Partial Class Form1
         Me.SaveFileDialog4 = New System.Windows.Forms.SaveFileDialog()
         Me.Button11 = New System.Windows.Forms.Button()
         Me.SaveFileDialog5 = New System.Windows.Forms.SaveFileDialog()
+        Me.SaveFileDialog6 = New System.Windows.Forms.SaveFileDialog()
+        Me.SaveFileDialog7 = New System.Windows.Forms.SaveFileDialog()
         CType(Me.AxWindowsMediaPlayer1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.TabControl1.SuspendLayout()
         Me.TabPage1.SuspendLayout()
@@ -650,6 +653,7 @@ Partial Class Form1
         '
         'TabPage7
         '
+        Me.TabPage7.Controls.Add(Me.Label17)
         Me.TabPage7.Controls.Add(Me.PictureBox2)
         Me.TabPage7.Controls.Add(Me.Label16)
         Me.TabPage7.Controls.Add(Me.TrackBar1)
@@ -666,6 +670,16 @@ Partial Class Form1
         Me.TabPage7.TabIndex = 6
         Me.TabPage7.Text = "Youtube Downloader"
         Me.TabPage7.UseVisualStyleBackColor = True
+        '
+        'Label17
+        '
+        Me.Label17.AutoSize = True
+        Me.Label17.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Label17.Location = New System.Drawing.Point(22, 6)
+        Me.Label17.Name = "Label17"
+        Me.Label17.Size = New System.Drawing.Size(60, 24)
+        Me.Label17.TabIndex = 17
+        Me.Label17.Text = "Status"
         '
         'PictureBox2
         '
@@ -716,6 +730,7 @@ Partial Class Form1
         'ComboBox4
         '
         Me.ComboBox4.FormattingEnabled = True
+        Me.ComboBox4.Items.AddRange(New Object() {"MP3 Only", "MP3 + Video"})
         Me.ComboBox4.Location = New System.Drawing.Point(167, 117)
         Me.ComboBox4.Name = "ComboBox4"
         Me.ComboBox4.Size = New System.Drawing.Size(135, 21)
@@ -803,6 +818,16 @@ Partial Class Form1
         'SaveFileDialog5
         '
         Me.SaveFileDialog5.Title = "Where would you like to save the extracted audio?"
+        '
+        'SaveFileDialog6
+        '
+        Me.SaveFileDialog6.FileName = "files stored here"
+        Me.SaveFileDialog6.Title = "Where do you want to store the files?"
+        '
+        'SaveFileDialog7
+        '
+        Me.SaveFileDialog7.FileName = "default"
+        Me.SaveFileDialog7.Title = "Where should the file be saved?"
         '
         'Form1
         '
@@ -918,4 +943,7 @@ Partial Class Form1
     Friend WithEvents Label15 As Label
     Friend WithEvents Label16 As Label
     Friend WithEvents PictureBox2 As PictureBox
+    Friend WithEvents Label17 As Label
+    Friend WithEvents SaveFileDialog6 As SaveFileDialog
+    Friend WithEvents SaveFileDialog7 As SaveFileDialog
 End Class
