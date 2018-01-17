@@ -52,7 +52,7 @@ Progress bar may not work properly yet
  -------------------------------
     Youtube Downloader
     
-  Can download videos from youtube and numerous other websites
+  Can download videos from youtube and numerous other websites*
   
   Is still in development, currently offers basic functionality which is not guaranteed to work
   
@@ -60,5 +60,8 @@ Progress bar may not work properly yet
   
   Automatic format detection currently not available
   
-  Currently cannot download any videos, only gets video thumbnails
+  Currently can only download Video's MP3 track and Video+MP3
+  
+  
+  *=still not functional
   
