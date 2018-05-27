@@ -124,6 +124,7 @@ Public Class Form1
         ComboBox2.Items.Add("360p")
         ComboBox2.Items.Add("240p")
         ComboBox2.Items.Add("144p")
+        ComboBox2.Items.Add("Custom")
         MusicStatus = False
         OpenFileDialog1.Filter = "All Supported Formats (*.mp4,*.avi,*.mkv ,*.swf, *.m4v, *.flv, *.gif, *.mxf, *.3gp, *.3g2, *.mov, *.webm)|*.flv; *.mp4; *.m4v; *.swf; *.mkv; *.avi; *.gif; *.mxf; *.3gp; *.3g2; *.mov; *.webm"
         Button13.Enabled = False
@@ -1231,6 +1232,10 @@ Endread:
         End If
         Label17.Text = "Status:"
         MsgBox("Successfully Downloaded")
+    End Sub
+
+    Private Sub ComboBox2_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox2.SelectedIndexChanged
+
     End Sub
 End Class
 'cut code
