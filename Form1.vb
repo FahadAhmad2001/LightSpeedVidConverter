@@ -200,6 +200,8 @@ Public Class Form1
             ExpQuality = " -vf scale=352:240 "
         ElseIf ComboBox2.SelectedItem = "144p" Then
             ExpQuality = " -vf scale=256:144 "
+        ElseIf ComboBox2.SelectedItem = "Custom" Then
+            ExpQuality = " -vf scale=" & Form6.Width & ":" & Form6.Height
         End If
         typeset = ComboBox1.SelectedItem
         Name = OpenFileDialog1.SafeFileName.Split(".")
@@ -726,13 +728,13 @@ Endread:
             error1 = GetAudioStuff.StandardError.ReadToEnd()
             GetAudioStuff.WaitForExit()
             GetAudioStuff.Close()
-            'MsgBox(error1)
+            MsgBox(error1)
             'MsgBox(output1)
             Dim sparts() As String
             Dim sparts1() As String
             sparts = Regex.Split(error1, "Metadata:")
-            'MsgBox(sparts.Rank)
-            'MsgBox(sparts(1))
+            MsgBox(sparts.Rank)
+            MsgBox(sparts(1))
             sparts1 = sparts(1).Split(vbCrLf)
             'MsgBox(sparts1.Rank)
             'MsgBox(sparts1.GetUpperBound(0))
@@ -943,7 +945,7 @@ Endread:
             SubOutputs = Regex.Split(MainOutput, "iB")
             Dim replaceString As String
             For Each item As String In SubOutputs
-                Dim output3() As String
+                Dim output31() As Object
                 Dim output4() As String
                 Dim output5() As String
                 Dim output6() As String
@@ -952,48 +954,59 @@ Endread:
                 If item.Contains("small") = False And item.Contains("medium") = False And item.Contains("(best)") = False And item.Contains("hd720") = False Then
 
                     If item.Contains("audio only") Then
-                        MsgBox(replaceString)
+                        'MsgBox(replaceString)
                         MsgBox("contains audio")
                         'FormatType(FormatCount) = "Audio"
 
-                        MsgBox(replaceString)
-                        output3 = Regex.Split(item, "         ")
-                        FormatNumber(FormatCount) = output3(0)
-                        If output3(1).Contains("webm") Then
-                            FormatFileType(FormatCount) = "webm"
-                            output5 = Regex.Split(output3(1), "DASH audio  ")
-                            output6 = Regex.Split(output5(1), "k , ")
-                            FormatQualityIndex(FormatCount) = output6(0)
-                            If output3(1).Contains("Hz), ") Then
-                                output4 = Regex.Split(output3(1), "Hz), ")
-                                FormatSize(FormatCount) = output4(1)
-                            ElseIf output3(1).Contains("k, ") Then
-                                output4 = Regex.Split(output3(1), "k, ")
-                                FormatSize(FormatCount) = output4(1)
-                            End If
-                        ElseIf output3(1).Contains("m4a") Then
-                            FormatFileType(FormatCount) = "m4a"
-                            output5 = Regex.Split(output3(1), "DASH audio  ")
-                            output6 = Regex.Split(output5(1), "k , ")
-                            FormatQualityIndex(FormatCount) = output6(0)
-                            If output3(1).Contains("Hz), ") Then
-                                output4 = Regex.Split(output3(1), "Hz), ")
-                                FormatSize(FormatCount) = output4(1)
-                            ElseIf output3(1).Contains("k, ") Then
-                                output4 = Regex.Split(output3(1), "k, ")
-                                FormatSize(FormatCount) = output4(1)
-                            End If
+                        'MsgBox(replaceString)
+                        'MsgBox(item)
+                        If item.Contains("         ") Then
+                            MsgBox("spaces not issue")
                         End If
+                        'MsgBox(output31(0))
+                        Dim tempstring As String
+                        'tempstring = Regex.Replace(item, "         ", "SPLITTED")
+                        MsgBox(tempstring)
+                        Dim Temp2String()
+                        output31 = Regex.Split(replaceString, "          ")
+                        FormatNumber(FormatCount) = output31(0)
+                        MsgBox(output31(0))
+                        MsgBox(output31.Rank)
+                        If output31(1).Contains("webm") Then
+                            FormatFileType(FormatCount) = "webm"
+                            output5 = Regex.Split(output31(1), "DASH audio  ")
+                            output6 = Regex.Split(output5(1), "k , ")
+                            FormatQualityIndex(FormatCount) = output6(0)
+                            If output31(1).Contains("Hz), ") Then
+                                output4 = Regex.Split(output31(1), "Hz), ")
+                                FormatSize(FormatCount) = output4(1)
+                            ElseIf output31(1).Contains("k, ") Then
+                                output4 = Regex.Split(output31(1), "k, ")
+                                FormatSize(FormatCount) = output4(1)
+                            End If
+                        ElseIf output31(1).Contains("m4a") Then
+                            FormatFileType(FormatCount) = "m4a"
+                            output5 = Regex.Split(output31(1), "DASH audio  ")
+                            output6 = Regex.Split(output5(1), "k , ")
+                                FormatQualityIndex(FormatCount) = output6(0)
+                            If output31(1).Contains("Hz), ") Then
+                                output4 = Regex.Split(output31(1), "Hz), ")
+                                FormatSize(FormatCount) = output4(1)
+                            ElseIf output31(1).Contains("k, ") Then
+                                output4 = Regex.Split(output31(1), "k, ")
+                                FormatSize(FormatCount) = output4(1)
+                                End If
+                            End If
 
-                    Else
+                        Else
 
-                        output3 = Regex.Split(item, "          ")
-                        FormatNumber(FormatCount) = output3(0)
-                        If output3(1).Contains("mp4") Then
+                        output31 = Regex.Split(item, "          ")
+                        FormatNumber(FormatCount) = output31(0)
+                        If output31(1).Contains("mp4") Then
                             FormatType(FormatCount) = "Video"
                             FormatFileType(FormatCount) = "mp4"
-                            If output3(1).Contains("x144") Or output3(1).Contains("x240") Or output3(1).Contains("x360") Or output3(1).Contains("x480") Then
-                                output4 = Regex.Split(output3(1), "    DASH video")
+                            If output31(1).Contains("x144") Or output31(1).Contains("x240") Or output31(1).Contains("x360") Or output31(1).Contains("x480") Then
+                                output4 = Regex.Split(output31(1), "    DASH video")
                                 output5 = Regex.Split(output4(0), "mp4        ")
                                 MsgBox(output5(1))
                             End If
@@ -1235,7 +1248,9 @@ Endread:
     End Sub
 
     Private Sub ComboBox2_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox2.SelectedIndexChanged
-
+        If ComboBox2.SelectedItem = ("Custom") Then
+            Form6.ShowDialog()
+        End If
     End Sub
 End Class
 'cut code
