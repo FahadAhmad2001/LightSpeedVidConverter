@@ -39,6 +39,7 @@ Public Class Form1
     Dim ReplaceCover As New Process()
     Dim ReplaceCoverInfo As New ProcessStartInfo(Application.StartupPath & "\ReplaceCover.bat")
     Dim MusicStatus As Boolean
+    Dim VidURL As String
     Dim VidPath As String
     Dim GetAudioStuff As New Process()
     Dim GetAudioStuffInfo As New ProcessStartInfo(Application.StartupPath & "\GetAudioStuff.bat")
@@ -55,6 +56,7 @@ Public Class Form1
     Dim ChangeAudioStuff As New Process()
     Dim ChangeAudioStuffInfo As New ProcessStartInfo(Application.StartupPath & "\ChangeAudioStuff.bat")
     Dim YoutubeURL As String
+    Dim PicURL As String
     Dim GetVideoQuality As New Process
     Dim GetVideoQualityInfo As New ProcessStartInfo(Application.StartupPath & "\GetVideoQuality.bat")
     Dim FormatCount As Integer
@@ -75,6 +77,39 @@ Public Class Form1
     Dim OriginalExtension As String
     Dim DownloadMP3Only As New Process()
     Dim DownloadMP3OnlyInfo As New ProcessStartInfo(Application.StartupPath & "\DownloadOnlyMP3.bat")
+    Dim VideoTitle As String
+    Dim AudioCount As Integer
+    Dim VideoCount As Integer
+    Dim Audios As String
+    Dim Videos As String
+    Dim CurrentAudNumber As String
+    Dim CurrentAudSize As String
+    Dim CurrentAudFormat As String
+    Dim CurrentVidNumber As String
+    Dim CurrentVidSize As String
+    Dim CurrentVidFormat As String
+    Dim CurrentVidRes As String
+    Dim firstVid As String
+    Dim SelectedAudioNumber As String
+    Dim SelectedAudioSize As String
+    Dim SelectedVideoSize As String
+    Dim SelectedVideoNumber As String
+    Dim NeedToConvert As String
+    Dim SelectedAudioFormat As String
+    Dim SelectedVideoFormat As String
+    Dim HasSelectedQuality As String
+    Dim AutoVideoDownloader As Thread
+    Dim DownloadRunning As String
+    Dim WithEvents NormalDownload As New Process()
+    Dim NormalDownloadInfo As New ProcessStartInfo(Application.StartupPath & "\NormalDownload.bat")
+    Dim ETA As String
+    Dim CurrentProgress As String
+    Dim CurrentSpeed As String
+    Dim FileNameToSave As String
+    Dim ConvertDownloadedVid As New Process()
+    Dim ConvertDownloadedVidInfo As New ProcessStartInfo(Application.StartupPath & "\ffmpeg.exe")
+    Dim SameSelectedFormat As String
+    Dim EditBAT As StreamWriter
     'Dim TaskBarValue As System.Windows.Shell
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         OpenFileDialog1.Title = ("Select the media file you would want to convert")
@@ -98,6 +133,10 @@ Public Class Form1
         'End If
         'End If
         'Form2.AppStart.Abort()
+        Control.CheckForIllegalCrossThreadCalls = False
+        Label18.Text = ""
+        firstVid = True
+        DownloadRunning = "FALSE"
         ComboBox1.Items.Add("MPEG-4 H.264 Video/ MP4")
         ComboBox1.Items.Add("Windows Media Video / WMV")
         ComboBox1.Items.Add("Audio video Interleaved / AVI")
@@ -910,112 +949,267 @@ Endread:
         Dim reply As Integer = MessageBox.Show("Would you like to use the automatic format detecting method (only for development)?", "Please select", MessageBoxButtons.YesNo)
         If reply = DialogResult.Yes Then
             UsingMethod = "Development"
-            FormatCount = 0
-            Dim editBAT As StreamWriter
-            Dim output1 As String
-            Dim error1 As String
+            VidURL = TextBox1.Text
+            'Code copied from our other program, LightSpeed YouTube Downloader, can be found on GitHub
+            HasSelectedQuality = ""
+            AudioCount = 0
+            VideoCount = 0
+            If firstVid = False Then
+                AudioCount = 0
+                VideoCount = 0
+                'Array.Clear(Audios, 0, Audios.Length)
+                'Array.Clear(Videos, 0, Videos.Length)
+                Audios = String.Empty
+                Videos = String.Empty
+            End If
+            Audios = String.Empty
+            Videos = String.Empty
+            'PicURL = String.Empty
+            'VidTitle = String.Empty
+            CurrentAudFormat = String.Empty
+            CurrentAudNumber = String.Empty
+            CurrentAudSize = String.Empty
+            CurrentProgress = String.Empty
+            CurrentSpeed = String.Empty
+            CurrentVidFormat = String.Empty
+            CurrentVidNumber = String.Empty
+            CurrentVidRes = String.Empty
+            CurrentVidSize = String.Empty
+            'firstVid = String.Empty
+            HasSelectedQuality = ""
+            SelectedAudioFormat = ""
+            SelectedAudioNumber = ""
+            SelectedAudioSize = ""
+            SelectedVideoFormat = ""
+            SelectedVideoNumber = ""
+            SelectedVideoSize = ""
+            FileNameToSave = ""
+            '          Label17.Text = "Getting Metadata..."
+            '         FormatCount = 0
+            '        Dim editBAT As StreamWriter
+            '       Dim output1 As String
+            '      Dim error1 As String
+            '     Dim output2() As String
+            '    Dim MainOutput As String
+            '   Dim SplitString As String
+            '  Dim SubOutputs() As String
+            ' editBAT = New StreamWriter(Application.StartupPath & "\GetVideoQuality.bat")
+            '           editBAT.WriteLine("cd " & Chr(34) & Application.StartupPath & Chr(34))
+            '          editBAT.WriteLine("youtube-dl -F " & TextBox1.Text)
+            '         editBAT.Close()
+            '        GetVideoQualityInfo.WindowStyle = ProcessWindowStyle.Hidden
+            '       GetVideoQualityInfo.CreateNoWindow = True
+            '      GetVideoQualityInfo.UseShellExecute = False
+            '     GetVideoQualityInfo.RedirectStandardError = True
+            '    GetVideoQualityInfo.RedirectStandardOutput = True
+            '   GetVideoQuality.StartInfo = GetVideoQualityInfo
+            '         '  GetVideoQuality.Start()
+            '          output1 = GetVideoQuality.StandardOutput.ReadToEnd()
+            '         error1 = GetVideoQuality.StandardError.ReadToEnd()
+            '        GetVideoQuality.WaitForExit()
+            '       GetVideoQuality.Close()
+            '      editBAT = New StreamWriter(Application.StartupPath & "\viderr1.txt")
+            '     editBAT.Write(error1)
+            '    editBAT.Close()
+            '   editBAT = New StreamWriter(Application.StartupPath & "\vidout1.txt")
+            '  editBAT.Write(output1)
+            ' editBAT.Close()
+            'output2 = Regex.Split(output1, "resolution note")
+            '           MainOutput = output2(1)
+            '          MsgBox(MainOutput)
+            '         SubOutputs = Regex.Split(MainOutput, "iB")
+            '        Dim replaceString As String
+            '       For Each item As String In SubOutputs
+            '      Dim output31() As Object
+            '     Dim output4() As String
+            '    Dim output5() As String
+            '   Dim output6() As String
+            '  replaceString = item
+            '           MsgBox(item)
+            '          If item.Contains("small") = False And item.Contains("medium") = False And item.Contains("(best)") = False And item.Contains("hd720") = False Then
+            '
+            '  I 'f item.Contains("audio only") Then
+            ''MsgBox(replaceString)
+            ' M 'sgBox("contains audio")
+            ''FormatType(FormatCount) = "Audio"
+            '
+            'MsgBox(replaceString)
+            'MsgBox(item)
+            '           If item.Contains("         ") Then
+            '          MsgBox("spaces not issue")
+            '     End If
+            '        'MsgBox(output31(0))
+            '       Dim tempstring As String
+            '      'tempstring = Regex.Replace(item, "         ", "SPLITTED")
+            '     MsgBox(tempstring)
+            '    Dim Temp2String()
+            '   output31 = Regex.Split(replaceString, "          ")
+            '  FormatNumber(FormatCount) = output31(0)
+            '          MsgBox(output31(0))
+            '         MsgBox(output31.Rank)
+            '        If output31(1).Contains("webm") Then
+            '       FormatFileType(FormatCount) = "webm"
+            '      output5 = Regex.Split(output31(1), "DASH audio  ")
+            '     output6 = Regex.Split(output5(1), "k , ")
+            '    FormatQualityIndex(FormatCount) = output6(0)
+            '   If output31(1).Contains("Hz), ") Then
+            '  output4 = Regex.Split(output31(1), "Hz), ")
+            ' FormatSize(FormatCount) = output4(1)
+            'ElseIf output31(1).Contains("k, ") Then
+            '   output4 = Regex.Split(output31(1), "k, ")
+            '                              FormatSize(FormatCount) = output4(1)
+            '     End If
+            '    ElseIf output31(1).Contains("m4a") Then
+            '       FormatFileType(FormatCount) = "m4a"
+            '      output5 = Regex.Split(output31(1), "DASH audio  ")
+            '     output6 = Regex.Split(output5(1), "k , ")
+            '    FormatQualityIndex(FormatCount) = output6(0)
+            '   If output31(1).Contains("Hz), ") Then
+            '       output4 = Regex.Split(output31(1), "Hz), ")
+            '      FormatSize(FormatCount) = output4(1)
+            ' ElseIf output31(1).Contains("k, ") Then
+            '    output4 = Regex.Split(output31(1), "k, ")
+            '   FormatSize(FormatCount) = output4(1)
+            'End If
+            'End If
+
+            ' Else
+
+            '       output31 = Regex.Split(item, "          ")
+            '      FormatNumber(FormatCount) = output31(0)
+            '     If output31(1).Contains("mp4") Then
+            '    FormatType(FormatCount) = "Video"
+            '   FormatFileType(FormatCount) = "mp4"
+            '  If output31(1).Contains("x144") Or output31(1).Contains("x240") Or output31(1).Contains("x360") Or output31(1).Contains("x480") Then
+            ' output4 = Regex.Split(output31(1), "    DASH video")
+            '    output5 = Regex.Split(output4(0), "mp4        ")
+            '   MsgBox(output5(1))
+            'End If
+            ' End If
+            'End If
+            '
+            '  End If
+
+            '  Next
+            Dim GetVideoThumbnail As New Process()
+            Dim GetVideoThumbnailInfo As New ProcessStartInfo(Application.StartupPath & "\youtube-dl.exe")
+            If Me.PictureBox2.Image IsNot Nothing Then
+                Me.PictureBox2.Image.Dispose()
+            End If
+            If File.Exists(Application.StartupPath & "\YTthumbnail.jpg") Then
+                File.Delete(Application.StartupPath & "\YTthumbnail.jpg")
+            End If
+            GetVideoThumbnailInfo.Arguments = "--get-thumbnail " & VidURL
+            GetVideoThumbnailInfo.UseShellExecute = False
+            GetVideoThumbnailInfo.RedirectStandardOutput = True
+            GetVideoThumbnailInfo.WindowStyle = ProcessWindowStyle.Hidden
+            GetVideoThumbnailInfo.CreateNoWindow = True
+            GetVideoThumbnail.StartInfo = GetVideoThumbnailInfo
+            GetVideoThumbnail.Start()
+            Dim output11new As String
+            output11new = GetVideoThumbnail.StandardOutput.ReadToEnd()
+            GetVideoThumbnail.WaitForExit()
+            GetVideoThumbnail.Close()
+            PicURL = output11new
+            My.Computer.Network.DownloadFile(PicURL, Application.StartupPath & "\YTthumbnail.jpg")
+            PictureBox2.Image = Image.FromFile(Application.StartupPath & "\YTthumbnail.jpg")
+            Dim GetVideoTitle As New Process()
+            Dim GetVideoTitleInfo As New ProcessStartInfo(Application.StartupPath & "\youtube-dl.exe")
+            GetVideoTitleInfo.UseShellExecute = False
+            GetVideoTitleInfo.WindowStyle = ProcessWindowStyle.Hidden
+            GetVideoTitleInfo.CreateNoWindow = True
+            GetVideoTitleInfo.RedirectStandardOutput = True
+            GetVideoTitleInfo.Arguments = "--get-title " & VidURL
+            GetVideoTitle.StartInfo = GetVideoTitleInfo
+            Dim output12new As String
+            GetVideoTitle.Start()
+            output12new = GetVideoTitle.StandardOutput.ReadToEnd()
+            GetVideoTitle.WaitForExit()
+            GetVideoTitle.Close()
+            VideoTitle = output12new
+            Label18.Text = VideoTitle
+            Dim GetVideoFormats As New Process()
+            Dim GetVideoFormatsInfo As New ProcessStartInfo(Application.StartupPath & "\youtube-dl.exe")
+            GetVideoFormatsInfo.Arguments = "-F " & VidURL
+            GetVideoFormatsInfo.UseShellExecute = False
+            GetVideoFormatsInfo.WindowStyle = ProcessWindowStyle.Hidden
+            GetVideoFormatsInfo.RedirectStandardOutput = True
+            GetVideoFormatsInfo.CreateNoWindow = True
+            GetVideoFormats.StartInfo = GetVideoFormatsInfo
+            Dim output13 As String
+            GetVideoFormats.Start()
+            output13 = GetVideoFormats.StandardOutput.ReadToEnd()
+            GetVideoFormats.WaitForExit()
+            GetVideoFormats.Close()
+            Dim output1() As String
+            output1 = Regex.Split(output13, "note")
             Dim output2() As String
-            Dim MainOutput As String
-            Dim SplitString As String
-            Dim SubOutputs() As String
-            editBAT = New StreamWriter(Application.StartupPath & "\GetVideoQuality.bat")
-            editBAT.WriteLine("cd " & Chr(34) & Application.StartupPath & Chr(34))
-            editBAT.WriteLine("youtube-dl -F " & TextBox1.Text)
-            editBAT.Close()
-            GetVideoQualityInfo.WindowStyle = ProcessWindowStyle.Hidden
-            GetVideoQualityInfo.CreateNoWindow = True
-            GetVideoQualityInfo.UseShellExecute = False
-            GetVideoQualityInfo.RedirectStandardError = True
-            GetVideoQualityInfo.RedirectStandardOutput = True
-            GetVideoQuality.StartInfo = GetVideoQualityInfo
-            GetVideoQuality.Start()
-            output1 = GetVideoQuality.StandardOutput.ReadToEnd()
-            error1 = GetVideoQuality.StandardError.ReadToEnd()
-            GetVideoQuality.WaitForExit()
-            GetVideoQuality.Close()
-            editBAT = New StreamWriter(Application.StartupPath & "\viderr1.txt")
-            editBAT.Write(error1)
-            editBAT.Close()
-            editBAT = New StreamWriter(Application.StartupPath & "\vidout1.txt")
-            editBAT.Write(output1)
-            editBAT.Close()
-            output2 = Regex.Split(output1, "resolution note")
-            MainOutput = output2(1)
-            MsgBox(MainOutput)
-            SubOutputs = Regex.Split(MainOutput, "iB")
-            Dim replaceString As String
-            For Each item As String In SubOutputs
-                Dim output31() As Object
-                Dim output4() As String
-                Dim output5() As String
-                Dim output6() As String
-                replaceString = item
-                MsgBox(item)
-                If item.Contains("small") = False And item.Contains("medium") = False And item.Contains("(best)") = False And item.Contains("hd720") = False Then
-
-                    If item.Contains("audio only") Then
-                        'MsgBox(replaceString)
-                        MsgBox("contains audio")
-                        'FormatType(FormatCount) = "Audio"
-
-                        'MsgBox(replaceString)
-                        'MsgBox(item)
-                        If item.Contains("         ") Then
-                            MsgBox("spaces not issue")
-                        End If
-                        'MsgBox(output31(0))
-                        Dim tempstring As String
-                        'tempstring = Regex.Replace(item, "         ", "SPLITTED")
-                        MsgBox(tempstring)
-                        Dim Temp2String()
-                        output31 = Regex.Split(replaceString, "          ")
-                        FormatNumber(FormatCount) = output31(0)
-                        MsgBox(output31(0))
-                        MsgBox(output31.Rank)
-                        If output31(1).Contains("webm") Then
-                            FormatFileType(FormatCount) = "webm"
-                            output5 = Regex.Split(output31(1), "DASH audio  ")
-                            output6 = Regex.Split(output5(1), "k , ")
-                            FormatQualityIndex(FormatCount) = output6(0)
-                            If output31(1).Contains("Hz), ") Then
-                                output4 = Regex.Split(output31(1), "Hz), ")
-                                FormatSize(FormatCount) = output4(1)
-                            ElseIf output31(1).Contains("k, ") Then
-                                output4 = Regex.Split(output31(1), "k, ")
-                                FormatSize(FormatCount) = output4(1)
-                            End If
-                        ElseIf output31(1).Contains("m4a") Then
-                            FormatFileType(FormatCount) = "m4a"
-                            output5 = Regex.Split(output31(1), "DASH audio  ")
-                            output6 = Regex.Split(output5(1), "k , ")
-                                FormatQualityIndex(FormatCount) = output6(0)
-                            If output31(1).Contains("Hz), ") Then
-                                output4 = Regex.Split(output31(1), "Hz), ")
-                                FormatSize(FormatCount) = output4(1)
-                            ElseIf output31(1).Contains("k, ") Then
-                                output4 = Regex.Split(output31(1), "k, ")
-                                FormatSize(FormatCount) = output4(1)
-                                End If
-                            End If
-
-                        Else
-
-                        output31 = Regex.Split(item, "          ")
-                        FormatNumber(FormatCount) = output31(0)
-                        If output31(1).Contains("mp4") Then
-                            FormatType(FormatCount) = "Video"
-                            FormatFileType(FormatCount) = "mp4"
-                            If output31(1).Contains("x144") Or output31(1).Contains("x240") Or output31(1).Contains("x360") Or output31(1).Contains("x480") Then
-                                output4 = Regex.Split(output31(1), "    DASH video")
-                                output5 = Regex.Split(output4(0), "mp4        ")
-                                MsgBox(output5(1))
-                            End If
-                        End If
+            output2 = output1(1).Split(Chr(10))
+            For Each item As String In output2
+                'MsgBox(item)
+                If item.Contains("audio only") Then
+                    'Dim TempCount As Integer
+                    'TempCount = AudioCount
+                    Dim output3() As String
+                    output3 = Regex.Split(item, "          ")
+                    CurrentAudNumber = output3(0)
+                    If item.Contains("m4a") Then
+                        CurrentAudFormat = "m4a"
+                    ElseIf item.Contains("webm") Then
+                        CurrentAudFormat = "webm"
                     End If
+                    Dim output4() As String
+                    output4 = Regex.Split(item, "k, ")
+                    CurrentAudSize = output4(1)
+                    'TempCount = TempCount + 1
+                    'MsgBox(CurrentAudNumber & "TRIM" & CurrentAudFormat & "TRIM" & CurrentAudSize)
+                    Audios = Audios & CurrentAudNumber & "TRIM" & CurrentAudFormat & "TRIM" & CurrentAudSize & "NEXT"
 
+                    AudioCount = AudioCount + 1
+                ElseIf item.Contains("video only") Then
+                    ' Dim TempCount As Integer
+                    ' TempCount = AudioCount + 1
+                    Dim output3() As String
+                    output3 = Regex.Split(item, "          ")
+                    CurrentVidNumber = output3(0)
+                    If item.Contains("mp4") Then
+                        CurrentVidFormat = "mp4"
+                    ElseIf item.Contains("webm") Then
+                        CurrentVidFormat = "webm"
+                    End If
+                    Dim output4() As String
+                    output4 = Regex.Split(item, "k , ")
+                    Dim output5() As String
+                    output5 = Regex.Split(output4(0), "x")
+                    Dim output7() As String
+                    output7 = Regex.Split(output5(1), Chr(32))
+                    'CurrentVidRes = output7(1)
+                    If output5(1).Contains("144p") Then
+                        CurrentVidRes = "144p"
+                    ElseIf output5(1).Contains("240p") Then
+                        CurrentVidRes = "240p"
+                    ElseIf output5(1).Contains("360p") Then
+                        CurrentVidRes = "360p"
+                    ElseIf output5(1).Contains("480p") Then
+                        CurrentVidRes = "480p"
+                    ElseIf output5(1).Contains("720p") Then
+                        CurrentVidRes = "720p"
+                    ElseIf output5(1).Contains("1080p") Then
+                        CurrentVidRes = "1080p"
+                    End If
+                    'MsgBox(CurrentVidRes)
+                    Dim output6() As String
+                    output6 = Regex.Split(item, "only, ")
+                    CurrentVidSize = output6(1)
+                    VideoCount = VideoCount + 1
+                    Videos = Videos & CurrentVidNumber & "TRIM" & CurrentVidFormat & "TRIM" & CurrentVidRes & "TRIM" & CurrentVidSize & "NEXT"
+
+                    ComboBox4.Items.Add(CurrentVidFormat & " - " & CurrentVidRes)
                 End If
-
             Next
+            TrackBar1.Maximum = AudioCount - 1
+            ComboBox4.Items.Add("MP3 only")
+            Label16.Text = "Please select an audio and video quality"
         Else
             UsingMethod = "Working"
             Label17.Text = "Status: Getting Video Thumbnail"
@@ -1106,10 +1300,191 @@ Endread:
                 End If
             End If
         ElseIf UsingMethod = "Development" Then
+            If ComboBox4.SelectedItem = "MP3 only" Then
 
+            Else
+                SameSelectedFormat = ""
+                If DownloadRunning = "FALSE" Then
+                    AutoVideoDownloader = New Thread(AddressOf AutoDownloaderNew)
+                    AutoVideoDownloader.Start()
+                    'MsgBox("Started thread")
+                    DownloadRunning = "TRUE"
+                    GoTo EndStart
+                Else
+                    MsgBox("Please wait for the current download to complete")
+                End If
+            End If
+
+EndStart:
         End If
     End Sub
 
+
+
+    Public Sub AutoDownloaderNew()
+        ' MsgBox("sub started")
+        NeedToConvert = ""
+        If SelectedVideoFormat.Contains("webm") And SelectedAudioFormat.Contains("m4a") Then
+            NeedToConvert = "TRUE"
+            MsgBox("Format error. Please select a different audio quality")
+            MsgBox("Cross format support is currently under development")
+            GoTo EndDownloading
+        End If
+        If SelectedVideoFormat.Contains("mp4") And SelectedAudioFormat.Contains("webm") Then
+            NeedToConvert = "TRUE"
+            MsgBox("Format error. Please select a different audio quality")
+            MsgBox("Cross format support is currently under development")
+            GoTo EndDownloading
+        End If
+        If SelectedVideoFormat.Contains("mp4") And SelectedAudioFormat.Contains("m4a") Then
+            NeedToConvert = ""
+            SameSelectedFormat = "mp4"
+        End If
+        If SelectedVideoFormat.Contains("webm") And SelectedAudioFormat.Contains("webm") Then
+            NeedToConvert = ""
+            SameSelectedFormat = "webm"
+        End If
+        Dim command As String
+        command = "-f " & SelectedVideoNumber & "+" & SelectedAudioNumber & " " & VidURL & " --newline"
+        MsgBox(command)
+        'EditLogs = New StreamWriter(Application.StartupPath & "\tempfile.txt")
+        'EditLogs.WriteLine(command)
+        'EditLogs.Close()
+        EditBAT = New StreamWriter(Application.StartupPath & "\NormalDownload.bat")
+        EditBAT.WriteLine("cd " & Chr(34) & Application.StartupPath & Chr(34))
+        EditBAT.WriteLine("youtube-dl " & command)
+        EditBAT.Close()
+        'NormalDownloadInfo.Arguments = command
+        NormalDownloadInfo.CreateNoWindow = True
+        NormalDownloadInfo.UseShellExecute = False
+        NormalDownloadInfo.WindowStyle = ProcessWindowStyle.Hidden
+        NormalDownloadInfo.RedirectStandardOutput = True
+        'NormalDownloadInfo.RedirectStandardError = True
+        NormalDownload.StartInfo = NormalDownloadInfo
+        AddHandler NormalDownload.OutputDataReceived, AddressOf NewOutputReader
+        NormalDownload.Start()
+        If firstVid = True Then
+            NormalDownload.BeginOutputReadLine()
+            MsgBox("reading output")
+        End If
+        'EditLogs = New StreamWriter(Application.StartupPath & "\downloadlog.txt")
+        'Dim OutputReader As StreamReader = NormalDownload.StandardOutput
+        'Dim ErrorReader As StreamReader = NormalDownload.StandardError
+        'ErrorRead(ErrorReader)
+        'ReadOutput(OutputReader)
+        'MsgBox("reading output")
+        Dim output2 As String
+        Dim error2 As String
+        'error2 = NormalDownload.StandardError.ReadToEnd()
+        'output2 = NormalDownload.StandardOutput.ReadToEnd()
+        'MsgBox("OUTPUT:" & output2)
+        'MsgBox("ERROR:" & error2)
+        NormalDownload.WaitForExit()
+        NormalDownload.Close()
+        'MsgBox("finished")
+        NeedToConvert = "false"
+        firstVid = False
+        'EditLogs.Close()
+        'MsgBox(NormalDownload.ExitCode.ToString)
+        If NeedToConvert.Contains("TRUE") Then
+            Dim command2 As String
+            command2 = Chr(34) & FileNameToSave & ".mkv" & Chr(34) & " " & Chr(34) & FileNameToSave & ".mp4" & Chr(34)
+            ConvertDownloadedVidInfo.WindowStyle = ProcessWindowStyle.Hidden
+            ConvertDownloadedVidInfo.Arguments = command2
+            ConvertDownloadedVidInfo.CreateNoWindow = True
+
+            ConvertDownloadedVid.StartInfo = ConvertDownloadedVidInfo
+            ConvertDownloadedVid.Start()
+            Label17.Text = "Status: Converting..."
+            MsgBox("converting...")
+            ConvertDownloadedVid.WaitForExit()
+            ConvertDownloadedVid.Close()
+            Label18.Text = ""
+            If File.Exists(Application.StartupPath & "\" & FileNameToSave & ".mp4") Then
+                File.Copy(Application.StartupPath & "\" & FileNameToSave & ".mp4", My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\" & FileNameToSave & ".mp4")
+            Else
+                MsgBox("Error in downloading/converting the video, please contact support@serverwebsite.ddns.net")
+            End If
+        Else
+            If SameSelectedFormat.Contains("mp4") Then
+                If File.Exists(Application.StartupPath & "\" & FileNameToSave & ".mp4") Then
+                    File.Copy(Application.StartupPath & "\" & FileNameToSave & ".mp4", My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\" & FileNameToSave & ".mp4")
+                    File.Delete(Application.StartupPath & "\" & FileNameToSave & ".mp4")
+                Else
+                    MsgBox("Error in downloading the video, please contact support@serverwebsite.ddns.net")
+                    GoTo EndDownloading
+                End If
+            ElseIf SameSelectedFormat.Contains("webm") Then
+                If File.Exists(Application.StartupPath & "\" & FileNameToSave & ".webm") Then
+                    File.Copy(Application.StartupPath & "\" & FileNameToSave & ".webm", My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\" & FileNameToSave & ".webm")
+                    File.Delete(Application.StartupPath & "\" & FileNameToSave & ".webm")
+                Else
+                    MsgBox("Error in downloading the video, please contact support@serverwebsite.ddns.net")
+                    GoTo EndDownloading
+                End If
+            End If
+        End If
+
+        NeedToConvert = ""
+
+        MsgBox("Download completed. Video saved in My Documents.")
+EndDownloading:
+        DownloadRunning = "FALSE"
+        ProgressBar1.Value = 0
+        Label17.Text = "Status:"
+        AutoVideoDownloader.Abort()
+    End Sub
+    'Private Async Sub ReadOutput(Ou
+    Private Sub NewOutputReader(sendingProcess As Object, output As DataReceivedEventArgs)
+        'MsgBox(output.Data)
+        If Not String.IsNullOrEmpty(output.Data) Then
+            'MsgBox(output.Data)
+            'EditLogs.WriteLine(output.Data)
+            If output.Data.ToString().Contains("[download] Destination: ") Then
+                Dim output3() As String
+                output3 = Regex.Split(output.Data, "download] Destination: ")
+                Dim CutText As String
+                If output.Data.ToString().Contains(".f" & SelectedVideoNumber & "." & SelectedVideoFormat) Then
+                    CutText = ".f" & SelectedVideoNumber & "." & SelectedVideoFormat
+                ElseIf output.Data.ToString().Contains(".f" & SelectedAudioNumber & "." & SelectedAudioFormat) Then
+                    CutText = ".f" & SelectedAudioNumber & "." & SelectedAudioFormat
+                End If
+                Dim output4() As String
+                output4 = Regex.Split(output3(1), CutText)
+                FileNameToSave = output4(0)
+                MsgBox(FileNameToSave)
+            End If
+            If output.Data.Contains("[ffmpeg] Destination: ") And ComboBox1.SelectedItem = "MP3 Only" Then
+                Label17.Text = "Status: Converting to MP3..."
+                Dim output1() As String
+                output1 = Regex.Split(output.Data, "ffmpeg] Destination: ")
+                'MP3NameToSave = output1(1)
+            End If
+            If output.Data.ToString().Contains("[download]") = True And output.Data.ToString().Contains(" Destination: ") = False And output.Data.Contains(" 100% of ") = False Then
+                Dim TextToShow As String
+                Dim output5() As String
+                output5 = Regex.Split(output.Data.ToString(), "download] ")
+                TextToShow = output5(1)
+                TextToShow.TrimStart(Chr(32))
+                Label18.Text = "Downloading: " & TextToShow
+                Dim output6() As String
+                output6 = Regex.Split(TextToShow, "% of ")
+                CurrentProgress = output6(0)
+                Dim IntProgress As Integer
+                Dim DecProgress As Decimal = CurrentProgress
+                IntProgress = DecProgress * 10
+                ProgressBar1.Value = DecProgress
+            End If
+        End If
+        'Dim test() As String
+        ' Dim count As Integer
+        'count = 0
+        ' Do
+        '     ' MsgBox(output.Data.ToString())
+        '  test(count) = output.Data.ToString()
+        '   count = count + 1
+        'Loop Until String.IsNullOrEmpty(output.Data)
+    End Sub
     Public Sub MP3Downloader()
 
         Dim command As String
@@ -1250,6 +1625,50 @@ Endread:
     Private Sub ComboBox2_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox2.SelectedIndexChanged
         If ComboBox2.SelectedItem = ("Custom") Then
             Form6.ShowDialog()
+        End If
+    End Sub
+
+    Private Sub TrackBar1_Scroll(sender As Object, e As EventArgs) Handles TrackBar1.Scroll
+        Dim output1() As String
+        output1 = Regex.Split(Audios, "NEXT")
+        Dim SelectedItem As String
+        SelectedItem = output1(TrackBar1.Value)
+        Dim output2() As String
+        output2 = Regex.Split(SelectedItem, "TRIM")
+        SelectedAudioSize = output2(2)
+        SelectedAudioNumber = output2(0)
+        SelectedAudioFormat = output2(1)
+        If HasSelectedQuality.Contains("AUDIO") = False Then
+            HasSelectedQuality = HasSelectedQuality + "AUDIO"
+        End If
+        If HasSelectedQuality.Contains("AUDIO") = True And HasSelectedQuality.Contains("VIDEO") = True Then
+            Label16.Text = "Total File Size: " & SelectedVideoSize & " (VIDEO), " & SelectedAudioSize & " (AUDIO)"
+        End If
+    End Sub
+
+    Private Sub ComboBox4_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox4.SelectedIndexChanged
+        Dim CurrentQualitySelected As String
+        CurrentQualitySelected = ComboBox4.SelectedItem.ToString()
+        Dim output1() As String
+        output1 = Regex.Split(CurrentQualitySelected, " - ")
+        Dim output2() As String
+        output2 = Regex.Split(Videos, "NEXT")
+        Dim SelectedVideoIndex As String
+        For Each item As String In output2
+            If item.Contains(output1(0)) = True And item.Contains(output1(1)) = True Then
+                SelectedVideoIndex = item
+            End If
+        Next
+        Dim output3() As String
+        output3 = Regex.Split(SelectedVideoIndex, "TRIM")
+        SelectedVideoNumber = output3(0)
+        SelectedVideoSize = output3(3)
+        SelectedVideoFormat = output3(1)
+        If HasSelectedQuality.Contains("VIDEO") = False Then
+            HasSelectedQuality = HasSelectedQuality + "VIDEO"
+        End If
+        If HasSelectedQuality.Contains("AUDIO") = True And HasSelectedQuality.Contains("VIDEO") = True Then
+            Label16.Text = "Total File Size: " & SelectedVideoSize & " (VIDEO), " & SelectedAudioSize & " (AUDIO)"
         End If
     End Sub
 End Class
