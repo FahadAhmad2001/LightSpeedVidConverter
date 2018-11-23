@@ -56,9 +56,9 @@ Progress bar may not work properly yet
   
   Is still in development, currently offers basic functionality which is not guaranteed to work
   
-  Joining of DASH video and audio currently not available
+  Joining of DASH video and audio now works + gives filesize prior to download
   
-  Automatic format detection currently not available
+  Automatic format detection currently under development
   
   Currently can only download Video's MP3 track and Video+MP3
   
